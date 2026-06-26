@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trend Product Finder</title>
+<style>
+  /* ---------- Reset & base ---------- */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:
+      radial-gradient(900px 600px at 85% -10%, rgba(124, 92, 255, 0.18), transparent 60%),
+      radial-gradient(700px 500px at -10% 20%, rgba(20, 228, 163, 0.10), transparent 60%),
+      #0b0d12;
+    color: #e7eaf2;
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; font-weight: 700; }
+  button { font-family: inherit; }
+
+  /* ---------- Layout ---------- */
+  .app { max-width: 1280px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, #7c5cff, #14e4a3);
+    display: grid; place-items: center; font-weight: 800; color: #0b0d12;
+    box-shadow: 0 6px 24px rgba(124, 92, 255, 0.35);
+  }
+  .brand-text h1 { font-size: 20px; letter-spacing: -0.01em; }
+  .brand-text p { margin: 2px 0 0; font-size: 12px; color: #8a93a6; }
+  .header-actions { display: flex; gap: 10px; }
+
+  .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+  .stack { display: flex; flex-direction: column; gap: 24px; margin-top: 24px; }
+
+  @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ---------- Card ---------- */
+  .card {
+    background: linear-gradient(180deg, rgba(28, 35, 48, 0.6), rgba(22, 27, 36, 0.85));
+    border: 1px solid #232a36;
+    border-radius: 18px;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 16px; letter-spacing: 0.01em; }
+  .card-head .hint { font-size: 12px; color: #8a93a6; }
+
+  /* ---------- Form ---------- */
+  .field { margin-bottom: 14px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+  label.lbl { display: block; margin-bottom: 6px; font-size: 12px; color: #8a93a6; letter-spacing: 0.02em; text-transform: uppercase; }
+  input[type="text"], select, textarea {
+    width: 100%; padding: 11px 13px;
+    background: #0b0d12; border: 1px solid #2a3140; border-radius: 10px;
+    color: #e7eaf2; font-family: inherit; font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus, select:focus, textarea:focus {
+    outline: none; border-color: #7c5cff;
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+  }
+  select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%238a93a6' d='M6 8L0 0h12z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 34px; }
+
+  .skill-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  @media (max-width: 560px) { .skill-grid { grid-template-columns: 1fr; } }
+  .skill {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: #0b0d12; border: 1px solid #2a3140; border-radius: 10px;
+    cursor: pointer; user-select: none; font-size: 13px; transition: all 0.15s;
+  }
+  .skill input { accent-color: #7c5cff; width: 16px; height: 16px; }
+  .skill:hover { border-color: #3a4356; }
+  .skill.checked { background: rgba(124, 92, 255, 0.12); border-color: #7c5cff; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    padding: 11px 18px; border: 0; border-radius: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 600; transition: transform 0.05s, background 0.15s, opacity 0.15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: linear-gradient(135deg, #7c5cff, #6a4cef); color: white; box-shadow: 0 6px 18px rgba(124, 92, 255, 0.35); }
+  .btn-primary:hover { background: linear-gradient(135deg, #8a6bff, #7c5cff); }
+  .btn-ghost { background: transparent; border: 1px solid #2a3140; color: #e7eaf2; }
+  .btn-ghost:hover { background: #1c2330; }
+  .btn-success { background: #14e4a3; color: #0b0d12; }
+  .btn-success:hover { background: #2ef0b3; }
+  .btn-danger { background: transparent; color: #ff7a86; border: 1px solid rgba(255, 122, 134, 0.4); }
+  .btn-danger:hover { background: rgba(255, 93, 108, 0.12); }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+
+  /* ---------- Results ---------- */
+  .empty {
+    text-align: center; padding: 40px 20px; color: #8a93a6;
+    border: 1px dashed #2a3140; border-radius: 12px; font-size: 14px;
+  }
+  .empty svg { display: block; margin: 0 auto 12px; opacity: 0.6; }
+
+  .score-row { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; margin-bottom: 20px; }
+  @media (max-width: 560px) { .score-row { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  .ring { position: relative; width: 132px; height: 132px; flex-shrink: 0; }
+  .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .ring-bg { fill: none; stroke: #232a36; stroke-width: 12; }
+  .ring-fg { fill: none; stroke: url(#ringGrad); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(.2,.7,.2,1); }
+  .ring-label { position: absolute; inset: 0; display: grid; place-items: center; }
+  .ring-label .val { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
+  .ring-label .lbl-small { font-size: 11px; color: #8a93a6; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .product-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; word-break: break-word; }
+  .product-sub { font-size: 13px; color: #8a93a6; }
+
+  .categories { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 20px; }
+  .cat { display: flex; flex-direction: column; gap: 4px; }
+  .cat-top { display: flex; justify-content: space-between; font-size: 13px; }
+  .cat-name { color: #c9cfdc; }
+  .cat-value { color: #e7eaf2; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .bar { height: 8px; background: #1d2330; border-radius: 999px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: 999px; transition: width 0.7s cubic-bezier(.2,.7,.2,1); }
+  .bar.good > span { background: linear-gradient(90deg, #14e4a3, #6df0c3); }
+  .bar.warn > span { background: linear-gradient(90deg, #ffb547, #ffd07a); }
+  .bar.bad  > span { background: linear-gradient(90deg, #ff5d6c, #ff8a96); }
+  .bar.violet > span { background: linear-gradient(90deg, #7c5cff, #b39bff); }
+
+  .recommendation {
+    padding: 14px 16px; border-radius: 12px; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .recommendation .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .rec-test     { background: rgba(20, 228, 163, 0.12); color: #2ef0b3; border: 1px solid rgba(20, 228, 163, 0.3); }
+  .rec-test .dot { background: #14e4a3; box-shadow: 0 0 12px #14e4a3; }
+  .rec-research { background: rgba(255, 181, 71, 0.12); color: #ffc875; border: 1px solid rgba(255, 181, 71, 0.3); }
+  .rec-research .dot { background: #ffb547; box-shadow: 0 0 12px #ffb547; }
+  .rec-avoid    { background: rgba(255, 93, 108, 0.12); color: #ff8a96; border: 1px solid rgba(255, 93, 108, 0.3); }
+  .rec-avoid .dot { background: #ff5d6c; box-shadow: 0 0 12px #ff5d6c; }
+
+  .section-title { font-size: 13px; color: #8a93a6; text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 10px; }
+
+  .angle-list { display: flex; flex-direction: column; gap: 10px; }
+  .angle {
+    background: #0f131c; border: 1px solid #232a36; border-radius: 12px; padding: 14px;
+    display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start;
+  }
+  .angle .num {
+    width: 28px; height: 28px; border-radius: 8px; background: rgba(124, 92, 255, 0.15);
+    color: #b39bff; display: grid; place-items: center; font-weight: 700; font-size: 13px;
+  }
+  .angle .title { font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+  .angle .desc  { color: #b5bcca; font-size: 13px; }
+
+  .text-output {
+    background: #0f131c; border: 1px solid #232a36; border-radius: 12px;
+    padding: 14px 16px; white-space: pre-wrap; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.6; color: #d8dde8; max-height: 360px; overflow: auto;
+  }
+  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+  /* ---------- Saved ideas ---------- */
+  .saved-grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .saved-card {
+    background: #0f131c; border: 1px solid #232a36; border-radius: 12px; padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .saved-card .top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+  .saved-card .title { font-weight: 600; font-size: 14px; word-break: break-word; }
+  .saved-card .sub { font-size: 12px; color: #8a93a6; }
+  .pill {
+    padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+  }
+  .pill-test     { background: rgba(20, 228, 163, 0.12); color: #2ef0b3; }
+  .pill-research { background: rgba(255, 181, 71, 0.12); color: #ffc875; }
+  .pill-avoid    { background: rgba(255, 93, 108, 0.12); color: #ff8a96; }
+  .saved-meta { display: flex; gap: 12px; font-size: 12px; color: #8a93a6; }
+  .saved-meta b { color: #e7eaf2; font-weight: 600; }
+  .saved-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+  /* ---------- Comparison table ---------- */
+  .table-wrap { overflow-x: auto; border: 1px solid #232a36; border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #232a36; font-size: 13px; }
+  th { background: #0f131c; color: #8a93a6; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; }
+  tr:last-child td { border-bottom: 0; }
+  tr:hover td { background: rgba(124, 92, 255, 0.04); }
+  td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .cell-pill { display: inline-block; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: #14e4a3; color: #0b0d12; padding: 11px 18px; border-radius: 10px;
+    font-weight: 600; font-size: 13px; opacity: 0; pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Utility ---------- */
+  .hidden { display: none !important; }
+  .muted { color: #8a93a6; }
+  .spacer-12 { height: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div class="brand-text">
+        <h1>Trend Product Finder</h1>
+        <p>Evaluate e-commerce ideas before the niche saturates</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="resetBtn" type="button">Reset form</button>
+    </div>
+  </header>
+
+  <!-- Top: Inputs + Results -->
+  <div class="grid-2">
+    <!-- Inputs -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Evaluate an idea</h2>
+        <span class="hint">All fields used in scoring</span>
+      </div>
+      <form id="form" autocomplete="off">
+        <div class="field">
+          <label class="lbl" for="product">Product idea</label>
+          <input type="text" id="product" placeholder="e.g., portable mini espresso maker" required />
+        </div>
+        <div class="field">
+          <label class="lbl" for="audience">Target audience</label>
+          <input type="text" id="audience" placeholder="e.g., remote workers and travelers" required />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="lbl" for="budget">Estimated budget</label>
+            <select id="budget">
+              <option value="0">Under $500</option>
+              <option value="1" selected>$500 – $2,000</option>
+              <option value="2">$2,000 – $10,000</option>
+              <option value="3">$10,000+</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="trend">Trend signals</label>
+            <select id="trend">
+              <option value="3">Early / emerging</option>
+              <option value="2" selected>Growing steadily</option>
+              <option value="1">Peaking now</option>
+              <option value="0">Declining</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="lbl" for="competition">Competition level</label>
+            <select id="competition">
+              <option value="0">Low — few sellers</option>
+              <option value="1" selected>Medium — several brands</option>
+              <option value="2">High — many sellers</option>
+              <option value="3">Very high — saturated</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="urgency">Urgency</label>
+            <select id="urgency">
+              <option value="3">Launch this week</option>
+              <option value="2" selected>Within a month</option>
+              <option value="1">Within a quarter</option>
+              <option value="0">No rush</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Creator skills</label>
+          <div class="skill-grid" id="skillGrid">
+            <label class="skill"><input type="checkbox" value="video" /><span>Short-form video</span></label>
+            <label class="skill"><input type="checkbox" value="copywriting" /><span>Copywriting</span></label>
+            <label class="skill"><input type="checkbox" value="design" /><span>Design / branding</span></label>
+            <label class="skill"><input type="checkbox" value="paidads" /><span>Paid ads</span></label>
+            <label class="skill"><input type="checkbox" value="organic" /><span>Organic social</span></label>
+            <label class="skill"><input type="checkbox" value="email" /><span>Email marketing</span></label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit">Analyze idea</button>
+      </form>
+    </section>
+
+    <!-- Results -->
+    <section class="card" id="resultsCard">
+      <div class="card-head">
+        <h2>Score &amp; recommendation</h2>
+        <span class="hint" id="resultsHint">Run an analysis to see results</span>
+      </div>
+
+      <div id="emptyResults" class="empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#8a93a6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg>
+        Fill in the form on the left and click <b>Analyze idea</b> to get a score, category breakdown, and recommendation.
+      </div>
+
+      <div id="resultsContent" class="hidden">
+        <div class="score-row">
+          <div class="ring">
+            <svg viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#7c5cff"/>
+                  <stop offset="100%" stop-color="#14e4a3"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="50" stroke-dasharray="314.159" stroke-dashoffset="314.159"/>
+            </svg>
+            <div class="ring-label">
+              <div>
+                <div class="val" id="scoreValue">0</div>
+                <div class="lbl-small">score / 100</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="product-title" id="resultProduct">—</div>
+            <div class="product-sub" id="resultAudience">—</div>
+            <div class="spacer-12"></div>
+            <div class="recommendation" id="recommendation">
+              <span class="dot"></span>
+              <span id="recText">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">Category breakdown</div>
+        <div class="categories" id="categories"></div>
+
+        <div class="section-title">Three ad angles</div>
+        <div class="angle-list" id="angles"></div>
+
+        <div class="section-title">Final plan</div>
+        <pre class="text-output" id="planOutput"></pre>
+        <div class="row-actions">
+          <button class="btn btn-success btn-sm" id="copyPlan" type="button">Copy plan</button>
+          <button class="btn btn-ghost btn-sm" id="saveIdea" type="button">Save idea</button>
+        </div>
+
+        <div class="section-title">Brand outreach email</div>
+        <pre class="text-output" id="emailOutput"></pre>
+        <div class="row-actions">
+          <button class="btn btn-success btn-sm" id="copyEmail" type="button">Copy email</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bottom: Saved & Compare -->
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <h2>Saved ideas</h2>
+        <span class="hint" id="savedCount">0 saved</span>
+      </div>
+      <div id="savedEmpty" class="empty">No saved ideas yet. Analyze an idea and click <b>Save idea</b> to store it locally.</div>
+      <div id="savedList" class="saved-grid hidden"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Comparison table</h2>
+        <span class="hint">Ranked by overall score</span>
+      </div>
+      <div id="compareEmpty" class="empty">Save at least one idea to populate the comparison table.</div>
+      <div id="compareWrap" class="table-wrap hidden">
+        <table id="compareTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Score</th>
+              <th>Trend</th>
+              <th>Saturation</th>
+              <th>Ad</th>
+              <th>Profit</th>
+              <th>Fit</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody id="compareBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- State ----------
+  var STORAGE_KEY = "trendProductFinder.v1";
+  var savedIdeas = loadSaved();
+  var currentResult = null;
+
+  // ---------- DOM ----------
+  var form = document.getElementById("form");
+  var productEl = document.getElementById("product");
+  var audienceEl = document.getElementById("audience");
+  var budgetEl = document.getElementById("budget");
+  var trendEl = document.getElementById("trend");
+  var competitionEl = document.getElementById("competition");
+  var urgencyEl = document.getElementById("urgency");
+  var skillGrid = document.getElementById("skillGrid");
+
+  var emptyResults = document.getElementById("emptyResults");
+  var resultsContent = document.getElementById("resultsContent");
+  var resultsHint = document.getElementById("resultsHint");
+  var ringFg = document.getElementById("ringFg");
+  var scoreValue = document.getElementById("scoreValue");
+  var resultProduct = document.getElementById("resultProduct");
+  var resultAudience = document.getElementById("resultAudience");
+  var recommendationEl = document.getElementById("recommendation");
+  var recTextEl = document.getElementById("recText");
+  var categoriesEl = document.getElementById("categories");
+  var anglesEl = document.getElementById("angles");
+  var planOutput = document.getElementById("planOutput");
+  var emailOutput = document.getElementById("emailOutput");
+
+  var copyPlanBtn = document.getElementById("copyPlan");
+  var copyEmailBtn = document.getElementById("copyEmail");
+  var saveIdeaBtn = document.getElementById("saveIdea");
+  var resetBtn = document.getElementById("resetBtn");
+
+  var savedCountEl = document.getElementById("savedCount");
+  var savedEmpty = document.getElementById("savedEmpty");
+  var savedList = document.getElementById("savedList");
+
+  var compareEmpty = document.getElementById("compareEmpty");
+  var compareWrap = document.getElementById("compareWrap");
+  var compareBody = document.getElementById("compareBody");
+
+  var toast = document.getElementById("toast");
+
+  // ---------- Helpers ----------
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function round(n) { return Math.round(n); }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+  }
+
+  function loadSaved() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function persistSaved() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedIdeas));
+    } catch (e) {
+      showToast("Could not save to localStorage");
+    }
+  }
+
+  function getSkills() {
+    var inputs = skillGrid.querySelectorAll('input[type="checkbox"]');
+    var list = [];
+    inputs.forEach(function (i) { if (i.checked) list.push(i.value); });
+    return list;
+  }
+
+  function skillLabel(k) {
+    return ({
+      video: "Short-form video",
+      copywriting: "Copywriting",
+      design: "Design / branding",
+      paidads: "Paid ads",
+      organic: "Organic social",
+      email: "Email marketing"
+    })[k] || k;
+  }
+
+  function budgetLabel(v) {
+    return ["Under $500", "$500 – $2,000", "$2,000 – $10,000", "$10,000+"][v] || "—";
+  }
+  function trendLabel(v) {
+    return ["Declining", "Peaking now", "Growing steadily", "Early / emerging"][v] || "—";
+  }
+  function competitionLabel(v) {
+    return ["Low", "Medium", "High", "Very high"][v] || "—";
+  }
+  function urgencyLabel(v) {
+    return ["No rush", "Within a quarter", "Within a month", "Launch this week"][v] || "—";
+  }
+
+  // ---------- Skill checkbox styling ----------
+  skillGrid.addEventListener("change", function () {
+    skillGrid.querySelectorAll(".skill").forEach(function (lbl) {
+      var input = lbl.querySelector('input[type="checkbox"]');
+      lbl.classList.toggle("checked", !!(input && input.checked));
+    });
+  });
+
+  // ---------- Scoring ----------
+  function computeScores(input) {
+    var budget = +input.budget;            // 0..3
+    var trend = +input.trend;              // 0..3 (3 = early/best)
+    var comp = +input.competition;         // 0..3 (0 = best)
+    var urgency = +input.urgency;          // 0..3
+    var skills = input.skills || [];
+
+    // Trend potential
+    var trendBase = [25, 55, 75, 92][trend];
+    var trendPotential = clamp(trendBase + urgency * 2, 0, 100);
+
+    // Saturation risk (higher = worse)
+    var satBase = [15, 40, 65, 88][comp];
+    var saturationRisk = clamp(satBase - (trend === 3 ? 8 : 0) + (urgency === 0 ? 4 : 0), 0, 100);
+
+    // Ad potential
+    var skillWeights = { video: 18, copywriting: 12, paidads: 16, design: 8, organic: 10, email: 7 };
+    var adFromSkills = 0;
+    skills.forEach(function (s) { adFromSkills += (skillWeights[s] || 0); });
+    var adPotential = clamp(20 + adFromSkills + budget * 6, 0, 100);
+
+    // Profit potential
+    var profitPotential = clamp(50 + budget * 9 - comp * 7 + trend * 3, 0, 100);
+
+    // Creator fit
+    var hasVideo = skills.indexOf("video") !== -1;
+    var hasAds = skills.indexOf("paidads") !== -1;
+    var creatorFit = clamp(15 + skills.length * 12 + (hasVideo && hasAds ? 12 : 0) + (skills.indexOf("copywriting") !== -1 ? 4 : 0), 0, 100);
+
+    // Overall (saturation inverted)
+    var overall = round(
+      0.24 * trendPotential +
+      0.22 * (100 - saturationRisk) +
+      0.20 * adPotential +
+      0.18 * profitPotential +
+      0.16 * creatorFit
+    );
+
+    return {
+      overall: overall,
+      trendPotential: round(trendPotential),
+      saturationRisk: round(saturationRisk),
+      adPotential: round(adPotential),
+      profitPotential: round(profitPotential),
+      creatorFit: round(creatorFit)
+    };
+  }
+
+  function getRecommendation(scores) {
+    if (scores.overall >= 70 && scores.saturationRisk < 60) {
+      return { key: "test", label: "Test now", className: "rec-test", pill: "pill-test" };
+    }
+    if (scores.overall >= 50) {
+      return { key: "research", label: "Research more", className: "rec-research", pill: "pill-research" };
+    }
+    return { key: "avoid", label: "Avoid for now", className: "rec-avoid", pill: "pill-avoid" };
+  }
+
+  // ---------- Ad angles ----------
+  var ANGLE_TEMPLATES = [
+    {
+      tag: "pain",
+      title: "Pain-point hook",
+      body: function (i) { return "Open on " + i.audience + " visibly struggling with the problem that " + i.product + " solves. Reveal the product in 5 seconds with a hard cut."; }
+    },
+    {
+      tag: "transformation",
+      title: "Before / after transformation",
+      body: function (i) { return "Split-screen showing " + i.audience + "'s day without " + i.product + " vs with it. Caption: 'Why did nobody tell me sooner?'"; }
+    },
+    {
+      tag: "social-proof",
+      title: "Social proof reaction reel",
+      body: function (i) { return "Stitch real reactions from " + i.audience + " trying " + i.product + " for the first time. Lead with the most surprised face."; }
+    },
+    {
+      tag: "tutorial",
+      title: "5-second hack tutorial",
+      body: function (i) { return "Frame " + i.product + " as the one-step hack that fixes a daily friction for " + i.audience + ". End with a hard CTA."; }
+    },
+    {
+      tag: "aesthetic",
+      title: "Aesthetic unboxing",
+      body: function (i) { return "Cinematic ASMR-style unboxing of " + i.product + " set to a trending sound. Optimized for save-and-share with " + i.audience + "."; }
+    },
+    {
+      tag: "fomo",
+      title: "FOMO / 'sleeping on this'",
+      body: function (i) { return "'" + i.audience + " are sleeping on this' opener. Show a fast montage of use cases and stack social proof at the end."; }
+    },
+    {
+      tag: "comparison",
+      title: "Old way vs new way",
+      body: function (i) { return "Side-by-side: how " + i.audience + " currently does it vs how " + i.product + " does it. End with a price-to-value drop."; }
+    },
+    {
+      tag: "identity",
+      title: "Identity / status angle",
+      body: function (i) { return "Position " + i.product + " as the new default for " + i.audience + " who care about quality. Lifestyle b-roll, minimal voiceover."; }
+    },
+    {
+      tag: "founder",
+      title: "Founder POV",
+      body: function (i) { return "Talking-head 'Why I built " + i.product + " for " + i.audience + "' — raw, phone-shot, 30 seconds, with a clear hook in the first line."; }
+    }
+  ];
+
+  function pickAngles(input, scores) {
+    var skills = input.skills || [];
+    var picks = [];
+
+    // Heuristic ordering
+    if (skills.indexOf("video") !== -1) picks.push("pain", "transformation");
+    if (skills.indexOf("paidads") !== -1) picks.push("social-proof", "fomo");
+    if (skills.indexOf("copywriting") !== -1) picks.push("comparison", "tutorial");
+    if (skills.indexOf("design") !== -1) picks.push("aesthetic");
+    if (skills.indexOf("organic") !== -1) picks.push("identity", "tutorial");
+    if (skills.indexOf("email") !== -1) picks.push("founder");
+
+    if (scores.saturationRisk >= 65) picks.push("comparison", "identity");
+    if (+input.trend === 3) picks.push("founder", "tutorial");
+    if (+input.competition === 0) picks.push("founder");
+
+    // Always-on fallback order
+    var fallback = ["pain", "transformation", "social-proof", "tutorial", "aesthetic", "fomo", "comparison", "identity", "founder"];
+    picks = picks.concat(fallback);
+
+    var seen = {};
+    var unique = [];
+    for (var i = 0; i < picks.length && unique.length < 3; i++) {
+      if (!seen[picks[i]]) {
+        seen[picks[i]] = true;
+        unique.push(picks[i]);
+      }
+    }
+
+    return unique.map(function (tag) {
+      var t = ANGLE_TEMPLATES.find(function (x) { return x.tag === tag; });
+      return { title: t.title, body: t.body(input) };
+    });
+  }
+
+  // ---------- Outreach email ----------
+  function buildEmail(input, scores, angles, rec) {
+    var firstName = "there";
+    var brand = "[Brand team]";
+    var product = input.product;
+    var audience = input.audience;
+
+    var lines = [];
+    lines.push("Subject: Quick partnership idea — " + product + " for " + audience);
+    lines.push("");
+    lines.push("Hi " + firstName + ",");
+    lines.push("");
+    lines.push("I'm a creator building content for " + audience + ". I've been tracking the space around " + product + " and the early signals look strong (trend score " + scores.trendPotential + "/100, overall idea score " + scores.overall + "/100 in my own evaluation framework).");
+    lines.push("");
+    lines.push("I'd love to test " + product + " with my audience over the next few weeks. Here are three ad angles I'd run first:");
+    lines.push("  1. " + angles[0].title + " — " + angles[0].body);
+    lines.push("  2. " + angles[1].title + " — " + angles[1].body);
+    lines.push("  3. " + angles[2].title + " — " + angles[2].body);
+    lines.push("");
+    lines.push("If it's a fit, I can ship the first creative within a week and share performance data transparently. Open to a 15-minute call, or I can send a one-pager first — whichever is easier.");
+    lines.push("");
+    lines.push("Thanks for considering,");
+    lines.push("[Your name]");
+    return lines.join("\n");
+  }
+
+  // ---------- Final plan ----------
+  function buildPlan(input, scores, angles, rec) {
+    var lines = [];
+    lines.push("TREND PRODUCT FINDER — PLAN");
+    lines.push("============================");
+    lines.push("Product idea     : " + input.product);
+    lines.push("Target audience  : " + input.audience);
+    lines.push("Budget           : " + budgetLabel(+input.budget));
+    lines.push("Trend signals    : " + trendLabel(+input.trend));
+    lines.push("Competition      : " + competitionLabel(+input.competition));
+    lines.push("Urgency          : " + urgencyLabel(+input.urgency));
+    lines.push("Creator skills   : " + (input.skills.length ? input.skills.map(skillLabel).join(", ") : "—"));
+    lines.push("");
+    lines.push("OVERALL SCORE    : " + scores.overall + " / 100");
+    lines.push("RECOMMENDATION   : " + rec.label.toUpperCase());
+    lines.push("");
+    lines.push("Category breakdown:");
+    lines.push("  Trend potential   : " + scores.trendPotential + " / 100");
+    lines.push("  Saturation risk   : " + scores.saturationRisk + " / 100  (lower is better)");
+    lines.push("  Ad potential      : " + scores.adPotential + " / 100");
+    lines.push("  Profit potential  : " + scores.profitPotential + " / 100");
+    lines.push("  Creator fit       : " + scores.creatorFit + " / 100");
+    lines.push("");
+    lines.push("Top 3 ad angles:");
+    lines.push("  1. " + angles[0].title + " — " + angles[0].body);
+    lines.push("  2. " + angles[1].title + " — " + angles[1].body);
+    lines.push("  3. " + angles[2].title + " — " + angles[2].body);
+    return lines.join("\n");
+  }
+
+  // ---------- Render ----------
+  function renderCategories(scores) {
+    var rows = [
+      { name: "Trend potential",  value: scores.trendPotential,        cls: "good" },
+      { name: "Saturation risk",  value: scores.saturationRisk,        cls: scores.saturationRisk >= 65 ? "bad" : (scores.saturationRisk >= 40 ? "warn" : "good"), suffix: "  (lower is better)" },
+      { name: "Ad potential",     value: scores.adPotential,           cls: "violet" },
+      { name: "Profit potential", value: scores.profitPotential,       cls: scores.profitPotential >= 60 ? "good" : "warn" },
+      { name: "Creator fit",      value: scores.creatorFit,            cls: scores.creatorFit >= 60 ? "good" : "warn" }
+    ];
+    categoriesEl.innerHTML = "";
+    rows.forEach(function (r) {
+      var d = document.createElement("div");
+      d.className = "cat";
+      d.innerHTML =
+        '<div class="cat-top"><span class="cat-name">' + r.name + (r.suffix ? '<span class="muted"> ' + r.suffix + '</span>' : "") + '</span>' +
+        '<span class="cat-value">' + r.value + '<span class="muted"> / 100</span></span></div>' +
+        '<div class="bar ' + r.cls + '"><span style="width:0%"></span></div>';
+      categoriesEl.appendChild(d);
+      // animate next frame
+      requestAnimationFrame(function () {
+        d.querySelector(".bar > span").style.width = r.value + "%";
+      });
+    });
+  }
+
+  function renderAngles(angles) {
+    anglesEl.innerHTML = "";
+    angles.forEach(function (a, idx) {
+      var el = document.createElement("div");
+      el.className = "angle";
+      el.innerHTML =
+        '<div class="num">' + (idx + 1) + '</div>' +
+        '<div><div class="title"></div><div class="desc"></div></div>';
+      el.querySelector(".title").textContent = a.title;
+      el.querySelector(".desc").textContent = a.body;
+      anglesEl.appendChild(el);
+    });
+  }
+
+  function renderScore(score) {
+    var circumference = 2 * Math.PI * 50; // r=50
+    var offset = circumference * (1 - score / 100);
+    ringFg.setAttribute("stroke-dasharray", circumference.toFixed(3));
+    // animate from current value
+    requestAnimationFrame(function () {
+      ringFg.setAttribute("stroke-dashoffset", offset.toFixed(3));
+    });
+
+    // count up
+    var start = 0;
+    var dur = 700;
+    var t0 = performance.now();
+    function step(now) {
+      var t = clamp((now - t0) / dur, 0, 1);
+      var eased = 1 - Math.pow(1 - t, 3);
+      scoreValue.textContent = Math.round(start + (score - start) * eased);
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function renderRecommendation(rec) {
+    recommendationEl.className = "recommendation " + rec.className;
+    recTextEl.textContent = rec.label;
+  }
+
+  function renderResults(result) {
+    emptyResults.classList.add("hidden");
+    resultsContent.classList.remove("hidden");
+    resultsHint.textContent = "Analyzed " + new Date(result.createdAt).toLocaleString();
+
+    resultProduct.textContent = result.input.product;
+    resultAudience.textContent = "For " + result.input.audience;
+
+    renderScore(result.scores.overall);
+    renderCategories(result.scores);
+    renderRecommendation(result.recommendation);
+    renderAngles(result.angles);
+
+    planOutput.textContent = result.plan;
+    emailOutput.textContent = result.email;
+  }
+
+  // ---------- Saved + Compare ----------
+  function renderSaved() {
+    savedCountEl.textContent = savedIdeas.length + " saved";
+
+    if (savedIdeas.length === 0) {
+      savedEmpty.classList.remove("hidden");
+      savedList.classList.add("hidden");
+      compareEmpty.classList.remove("hidden");
+      compareWrap.classList.add("hidden");
+      return;
+    }
+
+    savedEmpty.classList.add("hidden");
+    savedList.classList.remove("hidden");
+    savedList.innerHTML = "";
+
+    var sorted = savedIdeas.slice().sort(function (a, b) { return b.scores.overall - a.scores.overall; });
+
+    sorted.forEach(function (s) {
+      var card = document.createElement("div");
+      card.className = "saved-card";
+      card.innerHTML =
+        '<div class="top">' +
+          '<div><div class="title"></div><div class="sub"></div></div>' +
+          '<span class="pill ' + s.recommendation.pill + '">' + s.recommendation.label + '</span>' +
+        '</div>' +
+        '<div class="saved-meta">' +
+          '<span>Score <b>' + s.scores.overall + '</b></span>' +
+          '<span>Trend <b>' + s.scores.trendPotential + '</b></span>' +
+          '<span>Sat <b>' + s.scores.saturationRisk + '</b></span>' +
+        '</div>' +
+        '<div class="saved-actions">' +
+          '<button class="btn btn-ghost btn-sm" data-act="load">Load</button>' +
+          '<button class="btn btn-ghost btn-sm" data-act="copy-plan">Copy plan</button>' +
+          '<button class="btn btn-ghost btn-sm" data-act="copy-email">Copy email</button>' +
+          '<button class="btn btn-danger btn-sm" data-act="delete">Delete</button>' +
+        '</div>';
+      card.querySelector(".title").textContent = s.input.product;
+      card.querySelector(".sub").textContent = "For " + s.input.audience + " · " + new Date(s.createdAt).toLocaleDateString();
+
+      card.querySelectorAll("button[data-act]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var act = btn.getAttribute("data-act");
+          if (act === "load") {
+            loadIntoForm(s);
+            renderResults(s);
+            currentResult = s;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } else if (act === "delete") {
+            savedIdeas = savedIdeas.filter(function (x) { return x.id !== s.id; });
+            persistSaved();
+            renderSaved();
+            renderCompare();
+            showToast("Idea deleted");
+          } else if (act === "copy-plan") {
+            copyToClipboard(s.plan, "Plan copied");
+          } else if (act === "copy-email") {
+            copyToClipboard(s.email, "Email copied");
+          }
+        });
+      });
+
+      savedList.appendChild(card);
+    });
+  }
+
+  function renderCompare() {
+    if (savedIdeas.length === 0) {
+      compareEmpty.classList.remove("hidden");
+      compareWrap.classList.add("hidden");
+      return;
+    }
+    compareEmpty.classList.add("hidden");
+    compareWrap.classList.remove("hidden");
+
+    var sorted = savedIdeas.slice().sort(function (a, b) { return b.scores.overall - a.scores.overall; });
+    compareBody.innerHTML = "";
+    sorted.forEach(function (s) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><div style="font-weight:600"></div><div class="muted" style="font-size:12px"></div></td>' +
+        '<td class="num">' + s.scores.overall + '</td>' +
+        '<td class="num">' + s.scores.trendPotential + '</td>' +
+        '<td class="num">' + s.scores.saturationRisk + '</td>' +
+        '<td class="num">' + s.scores.adPotential + '</td>' +
+        '<td class="num">' + s.scores.profitPotential + '</td>' +
+        '<td class="num">' + s.scores.creatorFit + '</td>' +
+        '<td><span class="pill cell-pill ' + s.recommendation.pill + '">' + s.recommendation.label + '</span></td>';
+      tr.querySelector("td div:first-child").textContent = s.input.product;
+      tr.querySelector("td div:nth-child(2)").textContent = "For " + s.input.audience;
+      compareBody.appendChild(tr);
+    });
+  }
+
+  function loadIntoForm(s) {
+    productEl.value = s.input.product;
+    audienceEl.value = s.input.audience;
+    budgetEl.value = s.input.budget;
+    trendEl.value = s.input.trend;
+    competitionEl.value = s.input.competition;
+    urgencyEl.value = s.input.urgency;
+    var inputs = skillGrid.querySelectorAll('input[type="checkbox"]');
+    inputs.forEach(function (i) {
+      i.checked = s.input.skills.indexOf(i.value) !== -1;
+    });
+    skillGrid.querySelectorAll(".skill").forEach(function (lbl) {
+      var input = lbl.querySelector('input[type="checkbox"]');
+      lbl.classList.toggle("checked", !!(input && input.checked));
+    });
+  }
+
+  // ---------- Copy ----------
+  function copyToClipboard(text, msg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast(msg || "Copied");
+      }, function () { fallbackCopy(text, msg); });
+    } else {
+      fallbackCopy(text, msg);
+    }
+  }
+  function fallbackCopy(text, msg) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); showToast(msg || "Copied"); }
+    catch (e) { showToast("Copy failed"); }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- Submit ----------
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+
+    var input = {
+      product: productEl.value.trim(),
+      audience: audienceEl.value.trim(),
+      budget: budgetEl.value,
+      trend: trendEl.value,
+      competition: competitionEl.value,
+      urgency: urgencyEl.value,
+      skills: getSkills()
+    };
+    if (!input.product || !input.audience) return;
+
+    var scores = computeScores(input);
+    var rec = getRecommendation(scores);
+    var angles = pickAngles(input, scores);
+    var plan = buildPlan(input, scores, angles, rec);
+    var email = buildEmail(input, scores, angles, rec);
+
+    currentResult = {
+      id: "i_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+      createdAt: Date.now(),
+      input: input,
+      scores: scores,
+      recommendation: rec,
+      angles: angles,
+      plan: plan,
+      email: email
+    };
+    renderResults(currentResult);
+  });
+
+  resetBtn.addEventListener("click", function () {
+    form.reset();
+    skillGrid.querySelectorAll(".skill").forEach(function (lbl) { lbl.classList.remove("checked"); });
+    emptyResults.classList.remove("hidden");
+    resultsContent.classList.add("hidden");
+    resultsHint.textContent = "Run an analysis to see results";
+    currentResult = null;
+  });
+
+  copyPlanBtn.addEventListener("click", function () {
+    if (!currentResult) return;
+    copyToClipboard(currentResult.plan, "Plan copied");
+  });
+  copyEmailBtn.addEventListener("click", function () {
+    if (!currentResult) return;
+    copyToClipboard(currentResult.email, "Email copied");
+  });
+
+  saveIdeaBtn.addEventListener("click", function () {
+    if (!currentResult) return;
+    // Avoid exact duplicates (same product+audience): replace
+    var key = currentResult.input.product.toLowerCase() + "|" + currentResult.input.audience.toLowerCase();
+    savedIdeas = savedIdeas.filter(function (s) {
+      return (s.input.product.toLowerCase() + "|" + s.input.audience.toLowerCase()) !== key;
+    });
+    savedIdeas.unshift(currentResult);
+    persistSaved();
+    renderSaved();
+    renderCompare();
+    showToast("Idea saved");
+  });
+
+  // ---------- Init ----------
+  renderSaved();
+  renderCompare();
+})();
+</script>
+</body>
+</html>
